@@ -353,6 +353,31 @@ nav button:focus-visible {
   object-fit: cover;
 }
 
+/* Staff matching list (checkbox rows) */
+.pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--blue);
+  border-radius: 10px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.pick input {
+  flex: none;
+  width: auto;
+  margin-top: 4px;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 /* ==========================================================================
    8. STATUS PILLS
    ========================================================================== */
