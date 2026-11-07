@@ -1,6 +1,7 @@
 /* ==========================================================================
    1. CONSTANTS
    ========================================================================== */
+const ADMIN = '#staff'; // owner key for notifications addressed to staff
 const SEAL = 'assets/cit-seal.png';
 const WILD = 'assets/wildcats.jpg';
 
@@ -200,6 +201,11 @@ function login(e) {
   view = a.role === 'student' ? 'report' : 'found';
   save();
   render();
+
+  if (a.role === 'admin') {
+    const waiting = S.lost.filter(l => (l.status || 'open') === 'open').length;
+    if (waiting) toast(`${waiting} student request${waiting > 1 ? 's' : ''} waiting for review`);
+  }
   return false;
 }
 
@@ -233,19 +239,17 @@ function notify(owner, text) {
   S.notes.unshift({ id: S.n++, owner, text, date: Date.now() });
 }
 
-function findMatches() {
-  S.lost.forEach(l => {
-    S.items
-      .filter(i => ['available', 'pending'].includes(i.status) && match(l, i))
-      .forEach(i => {
-        l.seen = l.seen || [];
-        if (l.seen.includes(i.id)) return;
-
-        l.seen.push(i.id);
-        notify(l.owner, `Possible match for your lost "${l.name}": found item "${i.name}" (${i.loc}).`);
-      });
-  });
+// Tells the staff dashboard that a student sent a new request.
+function notifyStaff(text) {
+  notify(ADMIN, text);
 }
+
+// Found items staff can still hand out (not yet returned or unclaimed).
+const openItems = () => S.items.filter(i => ['available', 'pending'].includes(i.status));
+
+const reqPill = l => l.status === 'matched'
+  ? '<span class="pill available">Staff found a match</span>'
+  : '<span class="pill pending">Waiting for staff</span>';
 
 /* ==========================================================================
    6. RENDERING
@@ -260,9 +264,10 @@ function render() {
   S.me = S.session.name;
 
   const nav = role === 'student'
-    ? []
-    : [['found', 'Found items'], ['claims', 'Claims'], ['returns', 'Returns & unclaimed']];
-  const unread = S.notes.filter(n => n.owner === S.me && !n.read).length;
+    ? [['report', 'Report lost item'], ['mine', 'My reports & notices']]
+    : [['found', 'Found items'], ['requests', 'Student requests'], ['claims', 'Claims'], ['returns', 'Returns & unclaimed']];
+  const mailbox = role === 'admin' ? ADMIN : S.me;
+  const unread = S.notes.filter(n => n.owner === mailbox && !n.read).length;
 
   let h = `<div class="top">
   <div>
@@ -280,7 +285,7 @@ function render() {
   </div>
 </div>
 <nav>${nav.map(([k, label]) =>
-    `<button class="${view === k ? 'on' : ''}" onclick="view='${k}';render()">${label}${k === 'mine' && unread ? ` (${unread})` : ''}</button>`
+    `<button class="${view === k ? 'on' : ''}" onclick="view='${k}';render()">${label}${(k === 'mine' || k === 'requests') && unread ? ` (${unread})` : ''}</button>`
   ).join('')}</nav>`;
 
   h += VIEWS[view]();
@@ -335,7 +340,7 @@ ${list.length
 <h4>My reports</h4>${mine.map(l => `<div class="card" style="margin-bottom:10px">
   <h3>${esc(l.name)}</h3>
   <p>${esc(l.desc)}<br>${esc(l.cat)} · lost at ${esc(l.loc)} · ${esc(l.date)}</p>
-  <div class="row"><button class="btn l" onclick="delLost(${l.id})">Remove report</button></div>
+  <div class="row">${reqPill(l)}<button class="btn l" onclick="delLost(${l.id})">Remove report</button></div>
 </div>`).join('') || '<div class="empty">You have not reported anything yet.</div>'}`;
   },
 
@@ -350,18 +355,20 @@ ${list.length
     const notes = S.notes.filter(n => n.owner === S.me);
 
     const lostCard = l => {
-      const matches = S.items.filter(i => i.status === 'available' && match(l, i));
+      const matches = (l.matched || []).map(id => S.items.find(x => x.id === id)).filter(Boolean);
 
       return `<div class="card" style="margin-bottom:10px">
   <h3>${esc(l.name)}</h3>
   <p>${esc(l.desc)}<br>${esc(l.cat)} · lost at ${esc(l.loc)} · ${esc(l.date)}</p>
   ${matches.length
-    ? `<p><b>Possible matches:</b></p>${matches.map(i => `<div class="row">
+    ? `<p><b>Staff found possible match(es):</b></p>${l.staffMsg ? `<div class="note">${esc(l.staffMsg)}</div>` : ''}${matches.map(i => `<div class="row">
     <span>${ICON[i.cat]} ${esc(i.name)} – ${esc(i.loc)}</span>
-    <button class="btn g" onclick="claimDlg(${i.id})">Claim</button>
+    ${i.status === 'available'
+      ? `<button class="btn g" onclick="claimDlg(${i.id})">Claim</button>`
+      : `<span class="pill ${i.status}">${ST[i.status]}</span>`}
   </div>`).join('')}`
-    : '<p>No matches yet.</p>'}
-  <div class="row"><button class="btn l" onclick="delLost(${l.id})">Remove report</button></div>
+    : '<p>Staff are still checking the found items for your request.</p>'}
+  <div class="row">${reqPill(l)}<button class="btn l" onclick="delLost(${l.id})">Remove report</button></div>
 </div>`;
     };
 
@@ -396,12 +403,66 @@ ${list.length
   <div class="stat"><b>${count('available')}</b>Available</div>
   <div class="stat"><b>${count('pending')}</b>Claims pending</div>
   <div class="stat"><b>${count('approved')}</b>Awaiting pickup</div>
-  <div class="stat"><b>${S.lost.length}</b>Lost reports</div>
+  <div class="stat"><b>${S.lost.filter(l => (l.status || 'open') === 'open').length}</b>Open requests</div>
 </div>
 <div class="row" style="margin:0 0 14px"><button class="btn g" onclick="addDlg()">+ Add found item</button></div>
 ${S.items.length
   ? `<div class="grid">${S.items.map(i => itemCard(i, statusSelect(i))).join('')}</div>`
   : '<div class="empty">No found items recorded. Add the first one.</div>'}`;
+  },
+
+  requests() {
+    const mine = S.notes.filter(n => n.owner === ADMIN);
+    const fresh = new Set(mine.filter(n => !n.read).map(n => n.id));
+    mine.forEach(n => { n.read = 1; });
+    save();
+
+    const isOpen = l => (l.status || 'open') === 'open';
+
+    const reqCard = l => {
+      const cand = openItems();
+      const sug = cand.filter(i => match(l, i));
+      const rest = cand.filter(i => !sug.includes(i));
+
+      const pick = (i, tag) => `<label class="pick">
+    <input type="checkbox" name="m" value="${i.id}" ${(l.matched || []).includes(i.id) ? 'checked' : ''}>
+    <span>${ICON[i.cat]} <b>${esc(i.name)}</b> – ${esc(i.desc)}<br>
+      <small>${esc(i.cat)} · ${esc(i.color || '—')} · found at ${esc(i.loc)} · ${fmt(i.date)}</small>
+      ${tag ? `<span class="pill available">${tag}</span>` : ''}</span>
+  </label>`;
+
+      return `<div class="card" style="margin-bottom:12px">
+  <h3>${esc(l.name)} <small class="sub">from ${esc(l.owner)}</small></h3>
+  <p>${esc(l.desc)}</p>
+  <p>${esc(l.cat)} · ${esc(l.color || '—')} · lost at ${esc(l.loc)} · ${esc(l.date)}${l.created ? ` · sent ${fmt(l.created)}` : ''}</p>
+  ${l.notified ? `<div class="note">Student last notified ${fmt(l.notified)}.</div>` : ''}
+  <form onsubmit="return notifyMatch(event,${l.id})">
+    <h4>Check against found items</h4>
+    ${cand.length
+      ? sug.map(i => pick(i, 'Suggested')).join('') + rest.map(i => pick(i, '')).join('')
+      : '<div class="empty">No found items recorded yet.</div>'}
+    <label>Message to student (optional)</label>
+    <textarea name="msg" placeholder="e.g. Please bring your school ID to the office.">${esc(l.staffMsg || '')}</textarea>
+    <div class="row">
+      <button class="btn g" ${cand.length ? '' : 'disabled'}>${l.status === 'matched' ? 'Update & notify student again' : 'Notify student of match'}</button>
+    </div>
+  </form>
+</div>`;
+    };
+
+    const open = S.lost.filter(isOpen);
+    const done = S.lost.filter(l => !isOpen(l));
+
+    return `<h2>Student requests</h2><span class="brush"></span>
+${mine.length
+  ? mine.slice(0, 5).map(n => `<div class="note">${fresh.has(n.id) ? '<b>New · </b>' : ''}${esc(n.text)}<br><small>${fmt(n.date)}</small></div>`).join('')
+  : ''}
+<h4>Waiting for review (${open.length})</h4>${open.length
+  ? open.map(reqCard).join('')
+  : '<div class="empty">No requests waiting. New student requests will show up here.</div>'}
+<h4>Student already notified (${done.length})</h4>${done.length
+  ? done.map(reqCard).join('')
+  : '<p class="sub">None yet.</p>'}`;
   },
 
   claims() {
@@ -476,8 +537,9 @@ function addLost(e) {
   }
 
   const f = Object.fromEntries(new FormData(e.target));
-  S.lost.unshift({ id: S.n++, owner: S.me, ...f });
-  findMatches();
+  const l = { id: S.n++, owner: S.me, ...f, status: 'open', created: Date.now() };
+  S.lost.unshift(l);
+  notifyStaff(`New request from ${S.me}: lost "${l.name}" (${l.cat}, ${l.loc}).`);
   save();
   view = 'report';
   render();
@@ -489,6 +551,36 @@ function delLost(id) {
   S.lost = S.lost.filter(l => l.id !== id);
   save();
   render();
+}
+
+/* ==========================================================================
+   7b. ACTIONS: STAFF MATCHING
+   ========================================================================== */
+function notifyMatch(e, id) {
+  e.preventDefault();
+
+  const l = S.lost.find(x => x.id === id);
+  const fd = new FormData(e.target);
+  const ids = fd.getAll('m').map(Number);
+  const picked = ids.map(n => S.items.find(x => x.id === n)).filter(Boolean);
+
+  if (!l || !picked.length) {
+    toast('Tick at least one found item that matches');
+    return false;
+  }
+
+  l.matched = ids;
+  l.status = 'matched';
+  l.staffMsg = (fd.get('msg') || '').trim();
+  l.notified = Date.now();
+
+  const names = picked.map(i => `"${i.name}" (${i.loc})`).join(', ');
+  notify(l.owner, `Staff found a possible match for your lost "${l.name}": ${names}. Open "My reports & notices" to claim it.${l.staffMsg ? ' Staff note: ' + l.staffMsg : ''}`);
+
+  save();
+  render();
+  toast(`${l.owner} has been notified`);
+  return false;
 }
 
 /* ==========================================================================
@@ -635,7 +727,6 @@ function addItem(e) {
       date: Date.now(),
       status: 'available',
     });
-    findMatches();
     save();
     dlg.close();
     render();
@@ -663,5 +754,4 @@ function setStatus(id, status) {
    10. INIT
    ========================================================================== */
 const dlg = $('#dlg');
-findMatches();
 render();
