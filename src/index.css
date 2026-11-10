@@ -1,0 +1,581 @@
+/* ==========================================================================
+   1. THEME VARIABLES
+   ========================================================================== */
+:root {
+  --navy: #7b1a1f;
+  --navy2: #9c2230;
+  --ink: #2b1114;
+  --paper: #fffdf9;
+  --grid: #f3e6d6;
+  --blue: #ecd0c8;
+  --green: #f2b705;
+  --yellow: #f2b705;
+  --pink: #d62b34;
+  --wood: #efe6dc;
+  --muted: #7a5a5c;
+  --card: #fbf1ea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --wood: #2a1a1b;
+    --paper: #241517;
+    --grid: #33201f;
+    --ink: #f6e9e4;
+    --muted: #c9a9a6;
+    --card: #2f1c1e;
+    --blue: #5a2a2e;
+  }
+
+  :root:not([data-theme="light"]) h1,
+  :root:not([data-theme="light"]) h2,
+  :root:not([data-theme="light"]) h3 {
+    color: #f2b705;
+  }
+}
+
+/* ==========================================================================
+   2. BASE / RESET
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+:root {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  min-height: 100vh;
+  padding: 16px;
+  background: var(--wood);
+  color: var(--ink);
+  font-family: Nunito, system-ui, sans-serif;
+}
+
+/* ==========================================================================
+   3. TYPOGRAPHY
+   ========================================================================== */
+h1,
+h2,
+h3 {
+  margin: 0;
+  color: var(--navy2);
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+h4 {
+  margin: 16px 0 6px;
+  color: var(--navy2);
+}
+
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.brush {
+  display: block;
+  width: 90px;
+  height: 7px;
+  margin: 6px 0 14px;
+  background: var(--green);
+  border-radius: 6px;
+  transform: rotate(-3deg);
+}
+
+/* ==========================================================================
+   4. LAYOUT: BOOK, BINDER, PAPER, TABS
+   ========================================================================== */
+.book {
+  position: relative;
+  display: flex;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 14px 22px 14px 14px;
+  background: var(--navy);
+  border: 3px solid var(--yellow);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px #0004;
+}
+
+.binder {
+  flex: none;
+  width: 56px;
+  background-color: var(--blue);
+  background-image: radial-gradient(circle at 50% 50%, #fff 0 9px, var(--navy) 10px 12px, transparent 13px);
+  background-position: 0 20px;
+  background-size: 100% 76px;
+  border-radius: 10px 0 0 10px;
+}
+
+.paper {
+  flex: 1;
+  min-width: 0;
+  min-height: 620px;
+  padding: 22px 26px 28px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+  border-radius: 0 10px 10px 0;
+}
+
+.tabs {
+  position: absolute;
+  top: 70px;
+  right: -2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tab {
+  width: 34px;
+  height: 96px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 12px 12px 0;
+  color: #103;
+  font: 800 12px Nunito, sans-serif;
+  writing-mode: vertical-rl;
+  cursor: pointer;
+}
+
+.tab.s {
+  background: var(--green);
+}
+
+.tab.a {
+  background: var(--yellow);
+}
+
+.tab.on {
+  width: 42px;
+  box-shadow: 2px 2px 0 #0003;
+}
+
+/* ==========================================================================
+   5. HEADER & NAVIGATION
+   ========================================================================== */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand img {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.me {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.me input {
+  width: 150px;
+  margin-left: 6px;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 18px;
+}
+
+nav button {
+  padding: 8px 16px;
+  background: var(--card);
+  border: 0;
+  border-radius: 99px;
+  color: var(--ink);
+  font: 700 14px Nunito, sans-serif;
+  cursor: pointer;
+}
+
+nav button.on {
+  background: var(--navy);
+  color: #fff;
+}
+
+/* ==========================================================================
+   6. FORMS & BUTTONS
+   ========================================================================== */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--blue);
+  border-radius: 10px;
+  color: var(--ink);
+  font: inherit;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+label {
+  display: block;
+  margin: 10px 0 3px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn {
+  padding: 9px 18px;
+  background: var(--navy);
+  border: 0;
+  border-radius: 99px;
+  color: #fff;
+  font: 800 14px Nunito, sans-serif;
+  cursor: pointer;
+}
+
+.btn.g {
+  background: var(--green);
+  color: #3a2300;
+}
+
+.btn.r {
+  background: var(--pink);
+  color: #fff;
+}
+
+.btn.l {
+  background: var(--card);
+  color: var(--ink);
+}
+
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.tab:focus-visible,
+nav button:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   7. CARDS & ITEM GRID
+   ========================================================================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  padding: 12px;
+  background: var(--card);
+  border: 1.5px solid var(--blue);
+  border-radius: 14px;
+}
+
+.card h3 {
+  font-size: 17px;
+}
+
+.card p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.ph {
+  display: grid;
+  place-items: center;
+  height: 120px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  background: var(--blue);
+  border-radius: 10px;
+  font-size: 44px;
+}
+
+.ph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Staff matching list (checkbox rows) */
+.pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: 1.5px solid var(--blue);
+  border-radius: 10px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.pick input {
+  flex: none;
+  width: auto;
+  margin-top: 4px;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   8. STATUS PILLS
+   ========================================================================== */
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--blue);
+  border-radius: 99px;
+  color: #102;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pill.available {
+  background: var(--green);
+}
+
+.pill.pending {
+  background: var(--yellow);
+}
+
+.pill.approved {
+  background: #ffe08a;
+}
+
+.pill.returned {
+  background: #c7c7d1;
+}
+
+.pill.rejected,
+.pill.unclaimed {
+  background: var(--pink);
+  color: #fff;
+}
+
+/* ==========================================================================
+   9. CONTENT BLOCKS: NOTES, EMPTY STATE, STATS, TABLES
+   ========================================================================== */
+.note {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: var(--card);
+  border-left: 5px solid var(--yellow);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.empty {
+  padding: 30px;
+  background: var(--card);
+  border: 1.5px dashed var(--blue);
+  border-radius: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  padding: 8px 16px;
+  background: var(--card);
+  border-radius: 12px;
+}
+
+.stat b {
+  display: block;
+  font-size: 22px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th,
+td {
+  padding: 8px;
+  border-bottom: 1.5px solid var(--grid);
+  text-align: left;
+  vertical-align: top;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+/* ==========================================================================
+   10. OVERLAYS: DIALOG & TOAST
+   ========================================================================== */
+dialog {
+  width: calc(100% - 32px);
+  max-width: 480px;
+  padding: 20px;
+  background: var(--paper);
+  border: 3px solid var(--navy);
+  border-radius: 16px;
+  color: var(--ink);
+}
+
+dialog::backdrop {
+  background: #0008;
+}
+
+.toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  z-index: 9;
+  padding: 10px 18px;
+  background: var(--navy);
+  border-radius: 99px;
+  color: #fff;
+  font-weight: 700;
+  transform: translateX(-50%);
+}
+
+/* ==========================================================================
+   11. LOGIN SCREEN
+   ========================================================================== */
+.login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 26px;
+  max-width: 840px;
+  margin: 10px auto;
+}
+
+.hero {
+  padding: 18px;
+  background: #0b0b0b;
+  border: 4px solid var(--yellow);
+  border-radius: 18px;
+  color: #fff;
+  text-align: center;
+}
+
+.hero img {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 10px;
+}
+
+.hero p {
+  margin: 10px 0 0;
+  color: #f4e3c0;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   12. RESPONSIVE (MOBILE, 640px AND BELOW)
+   ========================================================================== */
+@media (max-width: 640px) {
+  body {
+    padding: 8px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .book {
+    padding-right: 30px;
+  }
+
+  .binder {
+    width: 26px;
+    background-image: radial-gradient(circle, #fff 0 5px, var(--navy) 6px 8px, transparent 9px);
+    background-size: 100% 56px;
+  }
+
+  .paper {
+    padding: 16px 14px;
+  }
+
+  .tab {
+    width: 28px;
+  }
+
+  .brand img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bar,
+  .two,
+  .login {
+    grid-template-columns: 1fr;
+  }
+}
+a.btn {
+  display: inline-block;
+  margin-top: 8px;
+  text-decoration: none;
+}
