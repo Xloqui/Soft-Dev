@@ -1,13 +1,13 @@
 import { CATEGORY_ICON } from '../data/constants.js';
 import { formatDate } from '../lib/helpers.js';
-import { isPossibleMatch } from '../lib/matching.js';
+import { rankMatches } from '../lib/matching.js';
 import StatusPill from './StatusPill.jsx';
 
 // Staff view of one student's lost report, with every open found item as a checkbox.
-// Suggested matches (same category + similar colour or words) are listed first.
+// Items are sorted by match score (see lib/matching.js), best match first.
 export default function RequestCard({ report, openItems, onNotify }) {
-  const suggested = openItems.filter(item => isPossibleMatch(report, item));
-  const others = openItems.filter(item => !suggested.includes(item));
+  const ranked = rankMatches(report, openItems);
+  const bestId = ranked[0]?.suggested ? ranked[0].item.id : null;
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -15,8 +15,8 @@ export default function RequestCard({ report, openItems, onNotify }) {
     onNotify(report.id, form.getAll('match').map(Number), form.get('msg'));
   }
 
-  const pick = (item, isSuggested) => (
-    <label key={item.id} className="pick">
+  const pick = ({ item, score, reasons, suggested, impossible }) => (
+    <label key={item.id} className={`pick${impossible ? ' unlikely' : ''}`}>
       <input
         type="checkbox"
         name="match"
@@ -27,7 +27,14 @@ export default function RequestCard({ report, openItems, onNotify }) {
         {CATEGORY_ICON[item.cat]} <b>{item.name}</b> – {item.desc}
         <br />
         <small>{item.cat} · {item.color || '—'} · found at {item.loc} · {formatDate(item.date)}</small>
-        {isSuggested && <> <StatusPill status="available">Suggested</StatusPill></>}
+        {item.id === bestId && <> <StatusPill status="approved">Best match</StatusPill></>}
+        {suggested && <> <StatusPill status="available">Suggested</StatusPill></>}
+        {reasons.length > 0 && (
+          <span className="why">
+            {impossible ? 'Unlikely: ' : `Score ${score} · `}
+            {reasons.join(' · ')}
+          </span>
+        )}
       </span>
     </label>
   );
@@ -44,8 +51,9 @@ export default function RequestCard({ report, openItems, onNotify }) {
 
       <form onSubmit={handleSubmit}>
         <h4>Check against found items</h4>
-        {openItems.length
-          ? [...suggested.map(i => pick(i, true)), ...others.map(i => pick(i, false))]
+        <p className="sub">Sorted by how well each item matches the report. Best matches are at the top.</p>
+        {ranked.length
+          ? ranked.map(pick)
           : <div className="empty">No found items recorded yet.</div>}
 
         <label htmlFor={`msg-${report.id}`}>Message to student (optional)</label>

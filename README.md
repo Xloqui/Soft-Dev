@@ -1,5 +1,5 @@
 # CIT-U Campus Lost and Found System
-Software Development Project
+Software Development 1 Project
 
 A web app that connects students who lost something on campus with the staff who manage found items. Students report lost items, staff check them against found items and notify the student, and the student proves ownership before staff approve the claim and record the return.
 
