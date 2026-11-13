@@ -89,21 +89,34 @@ function notify(s, owner, text) {
 
 export const actions = {
   // Returns { ok: true } or { ok: false, error: '...' }.
-  login(s, { role, id, name, pw }) {
+ login(s, { role, id, pw }) {
     const userId = (id || '').trim().toLowerCase();
-    let account = s.accounts.find(a => a.id === userId && a.role === role);
+    const account = s.accounts.find(a => a.id === userId && a.role === role);
 
-    if (!account) {
-      if (role === 'admin') return { ok: false, error: 'Wrong username or password' };
-      if (!(name || '').trim()) return { ok: false, error: 'Enter your full name to create an account' };
-
-      account = { id: userId, pw, role: 'student', name: name.trim() };
-      s.accounts.push(account);
-    } else if (account.pw !== pw) {
-      return { ok: false, error: 'Wrong username or password' };
+    if (!account || account.pw !== pw) {
+      return { ok: false, error: 'Wrong ID or password' };
     }
 
     s.session = { id: account.id, role: account.role, name: account.name };
+    return { ok: true };
+  },
+
+  // Creates a STUDENT account. Staff accounts can't be registered here.
+  register(s, { id, name, pw, confirm }) {
+    const userId = (id || '').trim().toLowerCase();
+    const fullName = (name || '').trim();
+
+    if (!userId || !fullName) return { ok: false, error: 'Enter your student ID and full name' };
+    if (!/^[a-z0-9._-]{3,}$/.test(userId)) {
+      return { ok: false, error: 'ID must be 3+ characters (letters, numbers, . _ -)' };
+    }
+    if ((pw || '').length < 6) return { ok: false, error: 'Password must be at least 6 characters' };
+    if (pw !== confirm) return { ok: false, error: 'Passwords do not match' };
+    if (s.accounts.some(a => a.id === userId)) {
+      return { ok: false, error: 'That ID is already registered' };
+    }
+
+    s.accounts.push({ id: userId, pw, role: 'student', name: fullName });
     return { ok: true };
   },
 
