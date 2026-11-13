@@ -373,6 +373,19 @@ nav button:focus-visible {
   margin-top: 4px;
 }
 
+/* Why an item was suggested (score + reasons) */
+.pick .why {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Found before the student lost their item: can't be theirs */
+.pick.unlikely {
+  opacity: .6;
+}
+
 .btn:disabled {
   opacity: .5;
   cursor: not-allowed;
