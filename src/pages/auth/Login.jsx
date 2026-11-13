@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import Brand from '../../components/Brand.jsx';
 import { WILD } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
@@ -50,15 +50,9 @@ export default function Login() {
 
         {/* key={role} resets the form when switching tabs */}
         <form key={role} onSubmit={handleSubmit}>
-          <label htmlFor="login-id">{isStudent ? 'Student ID' : 'Staff username'}</label>
+          
+         <label htmlFor="login-id">{isStudent ? 'Student ID' : 'Staff username'}</label>
           <input id="login-id" name="id" required autoComplete="username" />
-
-          {isStudent && (
-            <>
-              <label htmlFor="login-name">Full name (first log in only)</label>
-              <input id="login-name" name="name" />
-            </>
-          )}
 
           <label htmlFor="login-pw">Password</label>
           <input id="login-pw" type="password" name="pw" required autoComplete="current-password" />
@@ -70,7 +64,7 @@ export default function Login() {
 
         <p className="sub">
           {isStudent
-            ? 'First time? Enter your ID, full name and a password to create your account.'
+            ? <>No account yet? <Link to="/register">Create one</Link></>
             : 'Demo staff login: admin / admin123'}
         </p>
       </div>

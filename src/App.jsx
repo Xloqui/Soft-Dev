@@ -10,9 +10,11 @@ import FoundItems from './pages/admin/FoundItems.jsx';
 import Returns from './pages/admin/Returns.jsx';
 import StudentRequests from './pages/admin/StudentRequests.jsx';
 import Login from './pages/auth/Login.jsx';
+import Register from './pages/auth/Register.jsx';
 import NotFound from './pages/NotFound.jsx';
 import MyReports from './pages/student/MyReports.jsx';
 import ReportLostItem from './pages/student/ReportLostItem.jsx';
+
 
 // Which URL shows which page.
 export default function App() {
@@ -26,6 +28,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={home} replace />} />
           <Route path="/login" element={session ? <Navigate to={home} replace /> : <Login />} />
+          <Route path="/register" element={session ? <Navigate to={home} replace /> : <Register />} />
 
           <Route
             path="/student"
