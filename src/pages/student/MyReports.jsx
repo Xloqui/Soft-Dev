@@ -1,19 +1,30 @@
 import { useEffect, useState } from 'react';
 import ClaimDialog from '../../components/ClaimDialog.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import LostReportCard from '../../components/LostReportCard.jsx';
 import StatusPill from '../../components/StatusPill.jsx';
 import { CATEGORY_ICON, ITEM_STATUS } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
 import { capitalize, formatDate } from '../../lib/helpers.js';
+import { claimStatus, reportStage } from '../../lib/reportStage.js';
 import { toast } from '../../lib/toast.js';
 
-// Student's notifications, their lost reports (with matches staff picked), and their claims.
-// Students only ever see the found items that staff matched to THEIR report.
+const NOTES_SHOWN = 5;
+
+// Student's notices, their lost reports (with matches staff picked), and their claims.
+// RULE: students only ever see the found items that staff matched to THEIR report.
 export default function MyReports() {
   const { state, session, act } = useStore();
   const [claiming, setClaiming] = useState(null);
+  const [removing, setRemoving] = useState(null);
+  const [showAllNotes, setShowAllNotes] = useState(false);
 
-  // Opening this page marks the student's notifications as read.
+  // Remember which notices were unread on arrival, so we can mark them "New".
+  const [newIds] = useState(
+    () => new Set(state.notes.filter(n => n.owner === session.id && !n.read).map(n => n.id)),
+  );
+
+  // Opening this page marks the student's notices as read.
   useEffect(() => {
     act.markNotesRead(session.id);
   }, [act, session.id]);
@@ -22,33 +33,60 @@ export default function MyReports() {
   const reports = state.lost.filter(l => l.ownerId === session.id);
   const claims = state.claims.filter(c => c.ownerId === session.id);
   const findItem = id => state.items.find(i => i.id === id);
+  const stages = reports.map(r => reportStage(r, state.claims, state.items));
+  const count = status => stages.filter(s => s.status === status).length;
 
   function submitClaim(itemId, proof) {
     const result = act.submitClaim(itemId, proof);
     setClaiming(null);
-    toast(result.ok ? 'Claim submitted' : result.error);
+    toast(result.ok ? 'Claim submitted. Staff will review it.' : result.error);
+  }
+
+  function confirmRemove() {
+    act.removeLostReport(removing.id);
+    setRemoving(null);
+    toast('Report removed');
   }
 
   return (
     <>
-      <h4>Notifications</h4>
+      <h2>My reports &amp; notices</h2>
+
+      <div className="stats">
+        <div className="stat"><b>{reports.length}</b>Reports</div>
+        <div className="stat"><b>{reports.filter(r => r.status === 'matched').length}</b>Matches found</div>
+        <div className="stat"><b>{stages.filter(s => s.label === 'Claim under review').length}</b>Claims in review</div>
+        <div className="stat"><b>{count('approved')}</b>Ready for pickup</div>
+      </div>
+
+      <h4>Notices</h4>
       {notes.length
-        ? notes.slice(0, 6).map(n => (
-          <div key={n.id} className="note">
-            {n.text}
-            <br />
-            <small>{formatDate(n.date)}</small>
-          </div>
-        ))
-        : <div className="empty">Nothing yet.</div>}
+        ? (
+          <>
+            {notes.slice(0, showAllNotes ? notes.length : NOTES_SHOWN).map(n => (
+              <div key={n.id} className="note">
+                {newIds.has(n.id) && <><StatusPill status="available">New</StatusPill>{' '}</>}
+                {n.text}
+                <br />
+                <small>{formatDate(n.date)}</small>
+              </div>
+            ))}
+            {notes.length > NOTES_SHOWN && (
+              <button type="button" className="btn l" onClick={() => setShowAllNotes(v => !v)}>
+                {showAllNotes ? 'Show fewer' : `Show all ${notes.length} notices`}
+              </button>
+            )}
+          </>
+        )
+        : <div className="empty">Nothing yet. Staff will message you here when they find a match.</div>}
 
       <h4>My lost item reports</h4>
       {reports.length
-        ? reports.map(report => {
+        ? reports.map((report, index) => {
           const matches = (report.matched || []).map(findItem).filter(Boolean);
 
           return (
-            <LostReportCard key={report.id} report={report} onRemove={act.removeLostReport}>
+            <LostReportCard key={report.id} report={report} stage={stages[index]} onRemove={setRemoving}>
               {matches.length ? (
                 <>
                   <p><b>Staff found possible match(es):</b></p>
@@ -68,7 +106,7 @@ export default function MyReports() {
             </LostReportCard>
           );
         })
-        : <div className="empty">No reports yet.</div>}
+        : <div className="empty">No reports yet. Use “Report lost item” to start one.</div>}
 
       <h4>My claims</h4>
       {claims.length ? (
@@ -80,20 +118,18 @@ export default function MyReports() {
             <tbody>
               {claims.map(c => {
                 const item = findItem(c.itemId);
-                const pickedUp = c.status === 'approved' && item?.status === 'returned';
+                const status = claimStatus(c, state.claims, item);
+                const labels = {
+                  approved: 'Approved – pick up at the office',
+                  returned: 'Returned to you',
+                };
 
                 return (
                   <tr key={c.id}>
                     <td>{item?.name}</td>
                     <td>{formatDate(c.date)}</td>
                     <td>
-                      {pickedUp ? (
-                        <StatusPill status="returned">Returned to you</StatusPill>
-                      ) : (
-                        <StatusPill status={c.status}>
-                          {c.status === 'approved' ? 'Approved – pick up at the office' : capitalize(c.status)}
-                        </StatusPill>
-                      )}
+                      <StatusPill status={status}>{labels[status] || capitalize(status)}</StatusPill>
                     </td>
                   </tr>
                 );
@@ -106,6 +142,14 @@ export default function MyReports() {
       )}
 
       <ClaimDialog item={claiming} onSubmit={submitClaim} onClose={() => setClaiming(null)} />
+      <ConfirmDialog
+        open={Boolean(removing)}
+        title="Remove this report?"
+        message={removing ? `"${removing.name}" will be removed and staff will stop looking for it.` : ''}
+        confirmLabel="Remove report"
+        onConfirm={confirmRemove}
+        onClose={() => setRemoving(null)}
+      />
     </>
   );
 }
