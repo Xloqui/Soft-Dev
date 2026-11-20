@@ -119,3 +119,29 @@ export function rankMatches(lost, items) {
     .sort((a, b) => b.score - a.score
       || Math.abs(a.item.date - lostTime) - Math.abs(b.item.date - lostTime));
 }
+
+/* ---------- Claims review: comparing a student's proof with the item ---------- */
+
+// Very short or common words that would make almost any proof "match".
+const PROOF_STOPWORDS = new Set([
+  'am', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'if', 'in', 'is', 'it', 'me', 'my', 'no',
+  'of', 'oh', 'ok', 'on', 'or', 'so', 'to', 'up', 'us', 'we',
+  'the', 'and', 'are', 'was', 'has', 'had', 'for', 'its', 'not', 'but', 'you', 'your', 'our',
+  'his', 'her', 'she', 'him', 'they', 'mine', 'there', 'their', 'which', 'when', 'where', 'what',
+]);
+
+// Splits text into lowercase words worth comparing: 2+ letters (so initials like "MJ" count)
+// or numbers like "042", minus common words like "the" or "in".
+export function proofWords(text) {
+  return (text || '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(word => word.length >= 2 && !COMMON_WORDS.has(word) && !PROOF_STOPWORDS.has(word));
+}
+
+// Words that appear in both texts, e.g. sharedWords('my corgi lock screen', 'Lock screen is a corgi')
+// → ['corgi', 'lock', 'screen'].
+export function sharedWords(a, b) {
+  const inB = new Set(proofWords(b));
+  return [...new Set(proofWords(a).filter(word => inB.has(word)))];
+}
