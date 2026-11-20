@@ -15,6 +15,7 @@ export default function AddFoundItemDialog({ open, onSubmit, onClose }) {
       color: form.get('color'),
       loc: form.get('loc'),
       desc: form.get('desc'),
+      hidden: form.get('hidden'),
       photo,
     });
   }
@@ -43,7 +44,18 @@ export default function AddFoundItemDialog({ open, onSubmit, onClose }) {
         <input id="found-loc" name="loc" required />
 
         <label htmlFor="found-desc">Description</label>
-        <textarea id="found-desc" name="desc" required />
+        <textarea id="found-desc" name="desc" required placeholder="What anyone can see on the item" />
+
+        <label htmlFor="found-hidden">🔒 Hidden details (staff only)</label>
+        <textarea
+          id="found-hidden"
+          name="hidden"
+          maxLength={300}
+          placeholder="e.g. lock screen is a cat photo, name written inside, contents of the bag"
+        />
+        <p className="sub">
+          Students never see this. Use it to check their proof of ownership when they claim the item.
+        </p>
 
         <label htmlFor="found-photo">Photo (optional)</label>
         <input id="found-photo" type="file" accept="image/*" name="photo" />

@@ -592,3 +592,9 @@ a.btn {
   margin-top: 8px;
   text-decoration: none;
 }
+
+/* Staff-only hidden verification details on found item cards */
+.note.hidden-details {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
