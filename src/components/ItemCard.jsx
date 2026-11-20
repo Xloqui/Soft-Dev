@@ -17,6 +17,11 @@ export default function ItemCard({ item, children }) {
         <br />
         Found at {item.loc} · {formatDate(item.date)}
       </p>
+      {item.hidden && (
+        <div className="note hidden-details">
+          <b>🔒 Hidden (staff only):</b> {item.hidden}
+        </div>
+      )}
       <div className="row">
         <StatusPill status={item.status}>{ITEM_STATUS[item.status]}</StatusPill>
         {children}
