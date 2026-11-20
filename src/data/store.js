@@ -197,6 +197,26 @@ export const actions = {
     });
   },
 
+  // Staff fix the details of an item already posted.
+  // `fields.photo`: undefined = keep the current photo, '' = remove it, a data URL = replace it.
+  updateFoundItem(s, itemId, fields) {
+    const item = s.items.find(i => i.id === itemId);
+    if (!item) return { ok: false, error: 'Item not found' };
+    if (!fields.name.trim() || !fields.loc.trim() || !fields.desc.trim()) {
+      return { ok: false, error: 'Name, place and description cannot be empty' };
+    }
+
+    item.name = fields.name.trim();
+    item.cat = fields.cat;
+    item.color = (fields.color || '').trim();
+    item.loc = fields.loc.trim();
+    item.desc = fields.desc.trim();
+    item.hidden = (fields.hidden || '').trim();
+    if (fields.photo !== undefined) item.photo = fields.photo;
+
+    return { ok: true };
+  },
+
   setItemStatus(s, itemId, status) {
     const item = s.items.find(i => i.id === itemId);
     if (!item) return;

@@ -296,6 +296,15 @@ nav button:focus-visible {
   margin-bottom: 16px;
 }
 
+/* Search + filters row on the staff Found items page */
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 180px 180px auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .two {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -582,6 +591,7 @@ dialog::backdrop {
   }
 
   .bar,
+  .filters,
   .two,
   .login {
     grid-template-columns: 1fr;
