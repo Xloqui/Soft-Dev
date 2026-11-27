@@ -187,6 +187,27 @@ export const actions = {
     notify(s, STAFF_MAILBOX, `New request from ${me.name}: lost "${report.name}" (${report.cat}, ${report.loc}).`);
   },
 
+  // A student fixes their own report. Only allowed while it's still "Waiting for staff",
+  // because once staff have matched it, changing the details could confuse the match.
+  updateLostReport(s, id, fields) {
+    const report = s.lost.find(l => l.id === id && l.ownerId === s.session.id);
+    if (!report) return { ok: false, error: 'Report not found' };
+    if (report.status !== 'open') {
+      return { ok: false, error: 'Staff already found a match, so this report can no longer be edited' };
+    }
+
+    report.name = fields.name;
+    report.cat = fields.cat;
+    report.color = fields.color;
+    report.loc = fields.loc;
+    report.date = fields.date;
+    report.desc = fields.desc;
+    report.edited = Date.now();
+
+    notify(s, STAFF_MAILBOX, `${report.ownerName} updated their request: lost "${report.name}" (${report.cat}, ${report.loc}).`);
+    return { ok: true };
+  },
+
   removeLostReport(s, id) {
     s.lost = s.lost.filter(l => !(l.id === id && l.ownerId === s.session.id));
   },
