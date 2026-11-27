@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import EditLostReportDialog from '../../components/EditLostReportDialog.jsx';
 import LostReportCard from '../../components/LostReportCard.jsx';
 import { CATEGORIES } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
+import { readReportForm, toLocalInput } from '../../lib/lostReport.js';
 import { reportStage } from '../../lib/reportStage.js';
 import { toast } from '../../lib/toast.js';
-
-// Formats a Date for <input type="datetime-local">, e.g. "2026-11-16T09:30".
-function toLocalInput(date) {
-  const pad = n => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 export default function ReportLostItem() {
   const { state, session, act } = useStore();
   const navigate = useNavigate();
   const [removing, setRemoving] = useState(null);
+  const [editing, setEditing] = useState(null);
   const [maxDate, setMaxDate] = useState(() => toLocalInput(new Date()));
 
   const myReports = state.lost.filter(l => l.ownerId === session.id);
@@ -24,22 +21,10 @@ export default function ReportLostItem() {
   function handleSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const f = Object.fromEntries(new FormData(form));
-    const fields = {
-      name: f.name.trim(),
-      cat: f.cat,
-      color: f.color.trim(),
-      loc: f.loc.trim(),
-      date: f.date,
-      desc: f.desc.trim(),
-    };
+    const { fields, error } = readReportForm(form);
 
-    if (!fields.name || !fields.loc || !fields.desc) {
-      toast('Please fill in the item name, place and description');
-      return;
-    }
-    if (new Date(fields.date) > new Date()) {
-      toast('The date lost cannot be in the future');
+    if (error) {
+      toast(error);
       return;
     }
 
@@ -47,6 +32,12 @@ export default function ReportLostItem() {
     form.reset();
     setMaxDate(toLocalInput(new Date()));
     toast('Report submitted. Staff will check the found items.');
+  }
+
+  function saveEdit(fields) {
+    const result = act.updateLostReport(editing.id, fields);
+    setEditing(null);
+    toast(result.ok ? 'Report updated' : result.error);
   }
 
   function confirmRemove() {
@@ -107,10 +98,12 @@ export default function ReportLostItem() {
             report={r}
             stage={reportStage(r, state.claims, state.items)}
             onRemove={setRemoving}
+            onEdit={setEditing}
           />
         ))
         : <div className="empty">You have not reported anything yet.</div>}
 
+      <EditLostReportDialog report={editing} onSave={saveEdit} onClose={() => setEditing(null)} />
       <ConfirmDialog
         open={Boolean(removing)}
         title="Remove this report?"
