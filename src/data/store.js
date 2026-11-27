@@ -127,6 +127,37 @@ export const actions = {
     s.session = null;
   },
 
+  // The logged-in user changes their display name.
+  // Their name is also updated on their existing reports and claims, so staff see the new one.
+  updateProfileName(s, name) {
+    const fullName = (name || '').trim();
+    if (fullName.length < 2) return { ok: false, error: 'Enter your full name' };
+
+    const me = s.session;
+    const account = s.accounts.find(a => a.id === me.id && a.role === me.role);
+    if (!account) return { ok: false, error: 'Account not found' };
+
+    account.name = fullName;
+    me.name = fullName;
+    s.lost.forEach(l => { if (l.ownerId === me.id) l.ownerName = fullName; });
+    s.claims.forEach(c => { if (c.ownerId === me.id) c.ownerName = fullName; });
+    return { ok: true };
+  },
+
+  // The logged-in user changes their password (same rules as Register).
+  changePassword(s, { current, pw, confirm }) {
+    const me = s.session;
+    const account = s.accounts.find(a => a.id === me.id && a.role === me.role);
+
+    if (!account || account.pw !== current) return { ok: false, error: 'Your current password is wrong' };
+    if ((pw || '').length < 6) return { ok: false, error: 'New password must be at least 6 characters' };
+    if (pw !== confirm) return { ok: false, error: 'New passwords do not match' };
+    if (pw === current) return { ok: false, error: 'New password must be different from the current one' };
+
+    account.pw = pw;
+    return { ok: true };
+  },
+
   markNotesRead(s, mailbox) {
     s.notes.forEach(n => {
       if (n.owner === mailbox) n.read = true;

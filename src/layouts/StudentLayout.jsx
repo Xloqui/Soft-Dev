@@ -12,6 +12,7 @@ export default function StudentLayout() {
   const links = [
     { to: '/student/report', label: 'Report lost item' },
     { to: '/student/reports', label: 'My reports & notices', badge: unread },
+    { to: '/student/profile', label: 'My profile' },
   ];
 
   return (
