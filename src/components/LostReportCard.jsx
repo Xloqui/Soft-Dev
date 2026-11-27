@@ -1,3 +1,4 @@
+import { buildingLabel } from '../lib/buildings.js';
 import { formatDate } from '../lib/helpers.js';
 import StatusPill from './StatusPill.jsx';
 
@@ -12,7 +13,7 @@ export default function LostReportCard({ report, stage, onRemove, onEdit, childr
       <p>
         {report.desc}
         <br />
-        {report.cat}{report.color ? ` · ${report.color}` : ''} · lost at {report.loc} · {formatDate(report.date)}
+        {report.cat}{report.color ? ` · ${report.color}` : ''} · lost in: {buildingLabel(report.building)} · {formatDate(report.date)}
         {report.edited && <> · edited {formatDate(report.edited)}</>}
       </p>
       {children}

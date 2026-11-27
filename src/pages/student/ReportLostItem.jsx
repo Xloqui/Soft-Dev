@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import EditLostReportDialog from '../../components/EditLostReportDialog.jsx';
 import LostReportCard from '../../components/LostReportCard.jsx';
-import { CATEGORIES } from '../../data/constants.js';
+import { CATEGORIES, REPORT_BUILDINGS } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
 import { readReportForm, toLocalInput } from '../../lib/lostReport.js';
 import { reportStage } from '../../lib/reportStage.js';
@@ -70,17 +70,28 @@ export default function ReportLostItem() {
           <input id="lost-color" name="color" maxLength={30} />
         </div>
         <div>
-          <label htmlFor="lost-loc">Where you lost it</label>
-          <input id="lost-loc" name="loc" required maxLength={80} placeholder="e.g. Library, 2nd floor" />
+          <label htmlFor="lost-building">Where you lost it</label>
+          <select id="lost-building" name="building" defaultValue="UNSURE">
+            {REPORT_BUILDINGS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
         </div>
         <div>
           <label htmlFor="lost-date">Date / time lost</label>
           <input id="lost-date" type="datetime-local" name="date" required max={maxDate} />
         </div>
-        <div />
+        <p className="sub" style={{ gridColumn: '1 / -1', margin: '6px 0 0' }}>
+          Choosing a building sends your report to that building&apos;s lost and found admin.
+          Choose &quot;Not sure&quot; and all building admins will check it.
+        </p>
         <div style={{ gridColumn: '1 / -1' }}>
           <label htmlFor="lost-desc">Description</label>
-          <textarea id="lost-desc" name="desc" required maxLength={400} placeholder="Brand, marks, contents…" />
+          <textarea
+            id="lost-desc"
+            name="desc"
+            required
+            maxLength={400}
+            placeholder="Brand, marks, contents, and the exact spot if you know it (e.g. room 301, library 2nd floor)"
+          />
         </div>
         <div className="row" style={{ gridColumn: '1 / -1' }}>
           <button className="btn">Submit report</button>

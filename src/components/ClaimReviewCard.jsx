@@ -1,5 +1,6 @@
 import { CATEGORY_ICON } from '../data/constants.js';
 import { formatDate } from '../lib/helpers.js';
+import { buildingLabel } from '../lib/buildings.js';
 import { sharedWords } from '../lib/matching.js';
 import Highlight from './Highlight.jsx';
 
@@ -22,7 +23,7 @@ export default function ClaimReviewCard({ claim, item, report, onApprove, onReje
       {report && (
         <p>
           <b>Their lost report:</b> {report.name} – {report.desc}
-          {' '}({report.color || 'no color'}, lost at {report.loc}, {formatDate(report.date)})
+          {' '}({report.color || 'no color'}, lost in: {buildingLabel(report.building)}, {formatDate(report.date)})
         </p>
       )}
 

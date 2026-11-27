@@ -3,23 +3,25 @@ import AddFoundItemDialog from '../../components/AddFoundItemDialog.jsx';
 import ItemCard from '../../components/ItemCard.jsx';
 import { CATEGORIES, ITEM_STATUS } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
+import { adminCanSee, buildingLabel } from '../../lib/buildings.js';
 import { toast } from '../../lib/toast.js';
 
-// STAFF ONLY: the full list of found items, with search, filters, add and edit.
+// STAFF ONLY: the found items of the logged-in admin's building, with search, filters, add and edit.
 export default function FoundItems() {
-  const { state, act } = useStore();
+  const { state, session, act } = useStore();
+  const myItems = state.items.filter(i => i.building === session.building);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
 
-  const count = s => state.items.filter(i => i.status === s).length;
-  const openRequests = state.lost.filter(l => l.status === 'open').length;
+  const count = s => myItems.filter(i => i.status === s).length;
+  const openRequests = state.lost.filter(l => l.status === 'open' && adminCanSee(l, session.building)).length;
 
   // Search looks at the name, description, color, place and hidden details.
   const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const shown = state.items.filter(item => {
+  const shown = myItems.filter(item => {
     if (category && item.cat !== category) return false;
     if (status && item.status !== status) return false;
 
@@ -48,6 +50,9 @@ export default function FoundItems() {
 
   return (
     <>
+      <h2>Found items · {buildingLabel(session.building)}</h2>
+      <span className="brush" />
+
       <div className="stats">
         <div className="stat"><b>{count('available')}</b>Available</div>
         <div className="stat"><b>{count('pending')}</b>Claims pending</div>
@@ -82,7 +87,7 @@ export default function FoundItems() {
 
       {filtering && (
         <p className="sub" style={{ marginBottom: 10 }}>
-          Showing {shown.length} of {state.items.length} items
+          Showing {shown.length} of {myItems.length} items
         </p>
       )}
 
@@ -106,9 +111,9 @@ export default function FoundItems() {
         </div>
       ) : (
         <div className="empty">
-          {state.items.length
+          {myItems.length
             ? 'No found items match your search. Try other words or clear the filters.'
-            : 'No found items recorded. Add the first one.'}
+            : `No found items recorded for the ${buildingLabel(session.building)} yet. Add the first one.`}
         </div>
       )}
 

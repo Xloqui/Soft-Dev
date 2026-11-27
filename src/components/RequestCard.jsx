@@ -1,4 +1,5 @@
 import { CATEGORY_ICON } from '../data/constants.js';
+import { buildingLabel, isUnsure } from '../lib/buildings.js';
 import { formatDate } from '../lib/helpers.js';
 import { rankMatches } from '../lib/matching.js';
 import StatusPill from './StatusPill.jsx';
@@ -42,9 +43,13 @@ export default function RequestCard({ report, openItems, onNotify }) {
   return (
     <div className="card" style={{ marginBottom: 12 }}>
       <h3>{report.name} <small className="sub">from {report.ownerName}</small></h3>
+      <div className="row" style={{ marginTop: 2 }}>
+        <StatusPill status={isUnsure(report) ? 'pending' : 'available'}>{buildingLabel(report.building)}</StatusPill>
+        {isUnsure(report) && <small className="sub">Shared with all building admins</small>}
+      </div>
       <p>{report.desc}</p>
       <p>
-        {report.cat} · {report.color || '—'} · lost at {report.loc} · {formatDate(report.date)}
+        {report.cat} · {report.color || '—'} · {formatDate(report.date)}
         {report.created && <> · sent {formatDate(report.created)}</>}
       </p>
       {report.notified && <div className="note">Student last notified {formatDate(report.notified)}.</div>}
@@ -54,7 +59,7 @@ export default function RequestCard({ report, openItems, onNotify }) {
         <p className="sub">Sorted by how well each item matches the report. Best matches are at the top.</p>
         {ranked.length
           ? ranked.map(pick)
-          : <div className="empty">No found items recorded yet.</div>}
+          : <div className="empty">Your building has no open found items yet.</div>}
 
         <label htmlFor={`msg-${report.id}`}>Message to student (optional)</label>
         <textarea

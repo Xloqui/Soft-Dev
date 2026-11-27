@@ -3,8 +3,8 @@ import { useStore } from '../../data/storeContext.js';
 
 // Staff record handovers and handle unclaimed items.
 export default function Returns() {
-  const { state, act } = useStore();
-  const withStatus = status => state.items.filter(i => i.status === status);
+  const { state, session, act } = useStore();
+  const withStatus = status => state.items.filter(i => i.building === session.building && i.status === status);
 
   const section = (title, items, renderAction) => (
     <>

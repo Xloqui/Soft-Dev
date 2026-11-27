@@ -1,13 +1,14 @@
 import { Outlet } from 'react-router';
 import Navbar from '../components/Navbar.jsx';
 import PageHeader from '../components/PageHeader.jsx';
-import { STAFF_MAILBOX } from '../data/constants.js';
 import { useStore } from '../data/storeContext.js';
+import { staffMailbox } from '../lib/buildings.js';
 
 // Header + staff menu around every admin/staff page.
 export default function AdminLayout() {
-  const { state } = useStore();
-  const unread = state.notes.filter(n => n.owner === STAFF_MAILBOX && !n.read).length;
+  const { state, session } = useStore();
+  const mailbox = staffMailbox(session.building);
+  const unread = state.notes.filter(n => n.owner === mailbox && !n.read).length;
 
   const links = [
     { to: '/admin/found', label: 'Found items' },
