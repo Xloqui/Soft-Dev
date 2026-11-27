@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import Brand from '../../components/Brand.jsx';
 import { WILD } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
+import { adminCanSee } from '../../lib/buildings.js';
 import { homeFor } from '../../lib/routes.js';
 import { toast } from '../../lib/toast.js';
 
@@ -23,7 +24,7 @@ export default function Login() {
     }
 
     if (role === 'admin') {
-      const waiting = state.lost.filter(l => l.status === 'open').length;
+      const waiting = state.lost.filter(l => l.status === 'open' && adminCanSee(l, result.building)).length;
       if (waiting) toast(`${waiting} student request${waiting > 1 ? 's' : ''} waiting for review`);
     }
     navigate(homeFor(role));
@@ -65,7 +66,7 @@ export default function Login() {
         <p className="sub">
           {isStudent
             ? <>No account yet? <Link to="/register">Create one</Link></>
-            : 'Demo staff login: admin / admin123'}
+            : <>Building admin logins: <b>gle</b>, <b>nge</b>, <b>acad</b>, <b>citu</b> (password <b>admin123</b>)</>}
         </p>
       </div>
     </div>

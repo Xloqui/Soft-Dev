@@ -7,16 +7,24 @@
 // Each action receives a copy of the state (`s`) and changes it directly.
 // StoreProvider saves the result and re-renders the pages.
 
-import { STAFF_MAILBOX } from './constants.js';
+import { BUILDINGS } from './constants.js';
+import { adminCanSee, buildingLabel, mailboxesFor, pickupOffice, staffMailbox } from '../lib/buildings.js';
 
-const STORAGE_KEY = 'clf-react-v1';
+// v2: building admins (data saved by older versions is not reused).
+const STORAGE_KEY = 'clf-react-v2';
 const DAY = 24 * 60 * 60 * 1000;
 
 function sampleData() {
   const now = Date.now();
 
   return {
-    accounts: [{ id: 'admin', pw: 'admin123', role: 'admin', name: 'Staff' }],
+    // One admin account per building (demo password for all: admin123).
+    accounts: [
+      { id: 'gle', pw: 'admin123', role: 'admin', name: BUILDINGS.GLE.admin, building: 'GLE' },
+      { id: 'nge', pw: 'admin123', role: 'admin', name: BUILDINGS.NGE.admin, building: 'NGE' },
+      { id: 'acad', pw: 'admin123', role: 'admin', name: BUILDINGS.ACAD.admin, building: 'ACAD' },
+      { id: 'citu', pw: 'admin123', role: 'admin', name: BUILDINGS.CAMPUS.admin, building: 'CAMPUS' },
+    ],
     session: null,
     items: [
       {
@@ -27,6 +35,7 @@ function sampleData() {
         cat: 'Bags',
         color: 'Black',
         loc: 'Library, 2nd floor',
+        building: 'ACAD',
         date: now - 2 * DAY,
         status: 'available',
       },
@@ -38,6 +47,7 @@ function sampleData() {
         cat: 'Electronics',
         color: 'White',
         loc: 'Cafeteria',
+        building: 'CAMPUS',
         date: now - DAY,
         status: 'available',
       },
@@ -49,7 +59,20 @@ function sampleData() {
         cat: 'IDs & Cards',
         color: 'Blue',
         loc: 'Gym entrance',
+        building: 'GLE',
         date: now - 4 * DAY,
+        status: 'available',
+      },
+      {
+        id: 4,
+        name: 'Blue umbrella',
+        desc: 'Folding umbrella with a white handle',
+        hidden: 'Initials "KP" scratched on the handle',
+        cat: 'Other',
+        color: 'Blue',
+        loc: 'NGE lobby',
+        building: 'NGE',
+        date: now - 3 * DAY,
         status: 'available',
       },
     ],
@@ -88,6 +111,21 @@ function notify(s, owner, text) {
   s.notes.unshift({ id: newId(s), owner, text, date: Date.now(), read: false });
 }
 
+// Sends a notice about a student's report to the admin(s) who handle it.
+function notifyAdmins(s, report, text) {
+  mailboxesFor(report).forEach(mailbox => notify(s, mailbox, text));
+}
+
+// Staff may only change items from their own building.
+function ownItem(s, itemId) {
+  const item = s.items.find(i => i.id === itemId);
+  return item && item.building === s.session.building ? item : null;
+}
+
+function where(item) {
+  return `${item.loc}, ${buildingLabel(item.building)}`;
+}
+
 /* ---------- actions ---------- */
 
 export const actions = {
@@ -101,7 +139,8 @@ export const actions = {
     }
 
     s.session = { id: account.id, role: account.role, name: account.name };
-    return { ok: true };
+    if (account.building) s.session.building = account.building;
+    return { ok: true, building: account.building };
   },
 
   // Creates a STUDENT account. Staff accounts can't be registered here.
@@ -175,7 +214,8 @@ export const actions = {
       name: fields.name,
       cat: fields.cat,
       color: fields.color,
-      loc: fields.loc,
+      // Where it was lost: GLE / NGE / ACAD / CAMPUS, or UNSURE. The exact spot goes in the description.
+      building: fields.building || 'UNSURE',
       date: fields.date,
       desc: fields.desc,
       status: 'open',
@@ -184,7 +224,7 @@ export const actions = {
     };
 
     s.lost.unshift(report);
-    notify(s, STAFF_MAILBOX, `New request from ${me.name}: lost "${report.name}" (${report.cat}, ${report.loc}).`);
+    notifyAdmins(s, report, `New request from ${me.name}: lost "${report.name}" (${report.cat}, ${buildingLabel(report.building)}).`);
   },
 
   // A student fixes their own report. Only allowed while it's still "Waiting for staff",
@@ -199,12 +239,12 @@ export const actions = {
     report.name = fields.name;
     report.cat = fields.cat;
     report.color = fields.color;
-    report.loc = fields.loc;
+    report.building = fields.building || 'UNSURE';
     report.date = fields.date;
     report.desc = fields.desc;
     report.edited = Date.now();
 
-    notify(s, STAFF_MAILBOX, `${report.ownerName} updated their request: lost "${report.name}" (${report.cat}, ${report.loc}).`);
+    notifyAdmins(s, report, `${report.ownerName} updated their request: lost "${report.name}" (${report.cat}, ${buildingLabel(report.building)}).`);
     return { ok: true };
   },
 
@@ -227,7 +267,7 @@ export const actions = {
       date: Date.now(),
     });
     item.status = 'pending';
-    notify(s, STAFF_MAILBOX, `${me.name} submitted a claim for "${item.name}".`);
+    notify(s, staffMailbox(item.building), `${me.name} submitted a claim for "${item.name}".`);
     return { ok: true };
   },
 
@@ -244,6 +284,8 @@ export const actions = {
       // Staff-only details used to check a student's proof of ownership. Never show on student pages.
       hidden: (fields.hidden || '').trim(),
       photo: fields.photo || '',
+      // Posted under the building of the admin who recorded it.
+      building: s.session.building,
       date: Date.now(),
       status: 'available',
     });
@@ -252,8 +294,8 @@ export const actions = {
   // Staff fix the details of an item already posted.
   // `fields.photo`: undefined = keep the current photo, '' = remove it, a data URL = replace it.
   updateFoundItem(s, itemId, fields) {
-    const item = s.items.find(i => i.id === itemId);
-    if (!item) return { ok: false, error: 'Item not found' };
+    const item = ownItem(s, itemId);
+    if (!item) return { ok: false, error: 'You can only edit items from your own building' };
     if (!fields.name.trim() || !fields.loc.trim() || !fields.desc.trim()) {
       return { ok: false, error: 'Name, place and description cannot be empty' };
     }
@@ -270,7 +312,7 @@ export const actions = {
   },
 
   setItemStatus(s, itemId, status) {
-    const item = s.items.find(i => i.id === itemId);
+    const item = ownItem(s, itemId);
     if (!item) return;
     item.status = status;
 
@@ -283,16 +325,22 @@ export const actions = {
   // Staff tick the found items that match a student's report and notify the student.
   notifyMatch(s, lostId, itemIds, message) {
     const report = s.lost.find(l => l.id === lostId);
-    const picked = itemIds.map(id => s.items.find(i => i.id === id)).filter(Boolean);
+    const picked = itemIds.map(id => ownItem(s, id)).filter(Boolean);
 
-    if (!report || !picked.length) return { ok: false, error: 'Tick at least one found item that matches' };
+    if (!report || !adminCanSee(report, s.session.building)) return { ok: false, error: 'Report not found' };
+    if (!picked.length) return { ok: false, error: 'Tick at least one found item that matches' };
 
-    report.matched = picked.map(i => i.id);
+    // Keep matches other buildings' admins made ("Not sure" reports are shared); replace only ours.
+    const fromOtherBuildings = (report.matched || []).filter(id => {
+      const other = s.items.find(i => i.id === id);
+      return other && other.building !== s.session.building;
+    });
+    report.matched = [...fromOtherBuildings, ...picked.map(i => i.id)];
     report.status = 'matched';
     report.staffMsg = (message || '').trim();
     report.notified = Date.now();
 
-    const names = picked.map(i => `"${i.name}" (${i.loc})`).join(', ');
+    const names = picked.map(i => `"${i.name}" (${where(i)})`).join(', ');
     notify(
       s,
       report.ownerId,
@@ -304,7 +352,7 @@ export const actions = {
 
   decideClaim(s, claimId, approve) {
     const claim = s.claims.find(c => c.id === claimId);
-    const item = claim && s.items.find(i => i.id === claim.itemId);
+    const item = claim && ownItem(s, claim.itemId);
     if (!claim || !item) return;
 
     claim.status = approve ? 'approved' : 'rejected';
@@ -320,10 +368,10 @@ export const actions = {
           notify(s, c.ownerId, `Your claim for "${item.name}" was rejected.`);
         });
 
-      notify(s, claim.ownerId, `Your claim for "${item.name}" was approved. Please pick it up at the campus office.`);
+      notify(s, claim.ownerId, `Your claim for "${item.name}" was approved. Please pick it up at ${pickupOffice(item.building)} and bring your school ID.`);
     } else {
       item.status = 'available';
-      notify(s, claim.ownerId, `Your claim for "${item.name}" was rejected. Contact the office if you have more proof.`);
+      notify(s, claim.ownerId, `Your claim for "${item.name}" was rejected. Contact ${pickupOffice(item.building)} if you have more proof.`);
     }
   },
 };

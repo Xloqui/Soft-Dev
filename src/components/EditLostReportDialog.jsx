@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../data/constants.js';
+import { CATEGORIES, REPORT_BUILDINGS } from '../data/constants.js';
 import { readReportForm, toLocalInput } from '../lib/lostReport.js';
 import { toast } from '../lib/toast.js';
 import Dialog from './Dialog.jsx';
@@ -41,8 +41,10 @@ export default function EditLostReportDialog({ report, onSave, onClose }) {
               </div>
             </div>
 
-            <label htmlFor="edit-loc">Where you lost it</label>
-            <input id="edit-loc" name="loc" required maxLength={80} defaultValue={report.loc} />
+            <label htmlFor="edit-building">Where you lost it</label>
+            <select id="edit-building" name="building" defaultValue={report.building || 'UNSURE'}>
+              {REPORT_BUILDINGS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
 
             <label htmlFor="edit-date">Date / time lost</label>
             <input

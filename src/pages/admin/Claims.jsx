@@ -8,12 +8,14 @@ import { toast } from '../../lib/toast.js';
 // STAFF ONLY: compare each student's proof of ownership with the item's hidden details,
 // then approve or reject.
 export default function Claims() {
-  const { state, act } = useStore();
+  const { state, session, act } = useStore();
   const [rejecting, setRejecting] = useState(null);
   const findItem = id => state.items.find(i => i.id === id);
 
-  const pending = state.claims.filter(c => c.status === 'pending');
-  const past = state.claims.filter(c => c.status !== 'pending');
+  // Only claims for items from this admin's building.
+  const mine = state.claims.filter(c => findItem(c.itemId)?.building === session.building);
+  const pending = mine.filter(c => c.status === 'pending');
+  const past = mine.filter(c => c.status !== 'pending');
 
   // The lost report this claim came from (the student's report that staff matched to the item).
   const reportFor = claim => state.lost.find(

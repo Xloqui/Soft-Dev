@@ -14,13 +14,13 @@ export function readReportForm(form) {
     name: (f.name || '').trim(),
     cat: f.cat,
     color: (f.color || '').trim(),
-    loc: (f.loc || '').trim(),
+    building: f.building || 'UNSURE',
     date: f.date,
     desc: (f.desc || '').trim(),
   };
 
-  if (!fields.name || !fields.loc || !fields.desc) {
-    return { error: 'Please fill in the item name, place and description' };
+  if (!fields.name || !fields.desc) {
+    return { error: 'Please fill in the item name and description' };
   }
   if (new Date(fields.date) > new Date()) {
     return { error: 'The date lost cannot be in the future' };

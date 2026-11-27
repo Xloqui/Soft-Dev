@@ -7,6 +7,7 @@ import StatusPill from '../../components/StatusPill.jsx';
 import { CATEGORY_ICON, ITEM_STATUS } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
 import { capitalize, formatDate } from '../../lib/helpers.js';
+import { buildingLabel, pickupOffice } from '../../lib/buildings.js';
 import { claimStatus, reportStage } from '../../lib/reportStage.js';
 import { toast } from '../../lib/toast.js';
 
@@ -135,7 +136,7 @@ export default function MyReports() {
                   {report.staffMsg && <div className="note">{report.staffMsg}</div>}
                   {matches.map(item => (
                     <div key={item.id} className="row">
-                      <span>{CATEGORY_ICON[item.cat]} {item.name} – {item.loc}</span>
+                      <span>{CATEGORY_ICON[item.cat]} {item.name} – {item.loc} ({buildingLabel(item.building)})</span>
                       {item.status === 'available'
                         ? <button type="button" className="btn g" onClick={() => setClaiming(item)}>Claim</button>
                         : <StatusPill status={item.status}>{ITEM_STATUS[item.status]}</StatusPill>}
@@ -162,7 +163,7 @@ export default function MyReports() {
                 const item = findItem(c.itemId);
                 const status = claimStatus(c, state.claims, item);
                 const labels = {
-                  approved: 'Approved – pick up at the office',
+                  approved: `Approved – pick up at ${pickupOffice(item?.building)}`,
                   returned: 'Returned to you',
                 };
 

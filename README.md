@@ -5,6 +5,20 @@ A web app that connects students who lost something on campus with the staff who
 
 > **Rule:** students must **not** be able to browse or search the list of found items, because that invites false claims. Students only see the items staff matched to **their own** report. Every page we build must follow this rule.
 
+## Building Admins
+Each building has its own admin account. Admins post the items found in their building, and students pick up approved items at that building's office.
+
+| Admin login | Handles items found in | Pickup office |
+|---|---|---|
+| `gle` | GLE Building | GLE building lost and found office |
+| `nge` | NGE Building | NGE building lost and found office |
+| `acad` | ACAD Building | ACAD building lost and found office |
+| `citu` | Elsewhere on campus (outside the buildings) | CIT-U main lost and found office |
+
+- Each admin only sees and manages **their own building's** found items, claims, and returns.
+- Students choose a **Building** on their lost report. A stated building sends the report **only** to that admin. **Not sure** sends it to **all** admins.
+- An admin can only match a report with found items from their own building.
+
 ## Tech Stack
 - **Frontend:** React (Vite), React Router, plain CSS (`src/index.css`, notebook theme)
 - **Data (for now):** browser `localStorage`, through `src/data/store.js`
@@ -35,10 +49,10 @@ A web app that connects students who lost something on campus with the staff who
 ```
 
 **Test logins**
-- Staff: `admin` / `admin123`
-- Student: any student ID, your full name, and a password (first login creates the account)
+- Staff: click **Admin / Staff**, then `gle`, `nge`, `acad`, or `citu` (password `admin123` for all)
+- Student: click **Create one** on the login page to register, then log in
 
-**Reset demo data:** F12 → Application → Local Storage → `http://localhost:5173` → delete `clf-react-v1`, then refresh.
+**Reset demo data:** F12 → Console → paste `localStorage.removeItem('clf-react-v2'); location.reload();` and press Enter.
 
 ## Project Structure
 ```
@@ -47,7 +61,7 @@ src/
 ├── layouts/      # Page shells: header + menu (StudentLayout, AdminLayout)
 ├── components/   # Reusable UI pieces (cards, dialogs, navbar, status pills)
 ├── data/         # store.js = all data + actions; useStore() hook
-├── lib/          # Small helpers (dates, matching rules, photos, toast)
+├── lib/          # Small helpers (dates, matching rules, buildings, photos, toast)
 ├── App.jsx       # All routes
 └── index.css     # All styles
 legacy/           # Old plain-JS version, for reference only
@@ -58,7 +72,7 @@ legacy/           # Old plain-JS version, for reference only
 |---|---|---|---|
 | Login, routing, header/menu | `pages/auth/`, `layouts/`, `App.jsx` | `loquinario` | _Hans Justin Loquinario_ |
 | Student pages (report, my reports, claims) | `pages/student/`, `LostReportCard`, `ClaimDialog` | `Flores` | _Stefanny Jean Flores_ |
-| Staff: found items & returns | `pages/admin/FoundItems`, `Returns`, `ItemCard`, `AddFoundItemDialog` | `surname` | _Sef Punay_ |
+| Staff: found items & returns | `pages/admin/FoundItems`, `Returns`, `ItemCard`, `AddFoundItemDialog` | `punay` | _Sef Punay_ |
 | Staff: student requests & claims review | `pages/admin/StudentRequests`, `Claims`, `RequestCard`, `lib/matching.js` | `coraza` | _Mitch Walter Coraza_ |
 | Data & Supabase (Phase 2), ERD | `data/` | `surname` | _Name_ |
 

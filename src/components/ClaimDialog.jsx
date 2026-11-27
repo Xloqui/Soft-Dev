@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildingLabel, pickupOffice } from '../lib/buildings.js';
 import Dialog from './Dialog.jsx';
 
 const MIN_PROOF = 10;
@@ -31,7 +32,9 @@ export default function ClaimDialog({ item, onSubmit, onClose }) {
       {item && (
         <>
           <h3>Claim: {item.name}</h3>
-          <p className="sub">Found at {item.loc}</p>
+          <p className="sub">
+            Found at {item.loc} ({buildingLabel(item.building)}). If approved, you&apos;ll pick it up at {pickupOffice(item.building)}.
+          </p>
           <p className="sub">
             Describe something only the owner would know (marks, contents, lock screen, serial no.).
             Staff will compare it with the item.

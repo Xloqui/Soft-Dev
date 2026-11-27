@@ -1,24 +1,29 @@
 import { useEffect, useState } from 'react';
 import RequestCard from '../../components/RequestCard.jsx';
-import { OPEN_STATUSES, STAFF_MAILBOX } from '../../data/constants.js';
+import { OPEN_STATUSES } from '../../data/constants.js';
 import { useStore } from '../../data/storeContext.js';
+import { adminCanSee, buildingLabel, staffMailbox } from '../../lib/buildings.js';
 import { formatDate } from '../../lib/helpers.js';
 import { toast } from '../../lib/toast.js';
 
 // Staff review students' lost reports and tell the student when a found item matches.
+// Each admin sees reports for their building plus reports where the student chose "Not sure",
+// and can only match them with found items from their own building.
 export default function StudentRequests() {
-  const { state, act } = useStore();
-  const staffNotes = state.notes.filter(n => n.owner === STAFF_MAILBOX);
+  const { state, session, act } = useStore();
+  const mailbox = staffMailbox(session.building);
+  const staffNotes = state.notes.filter(n => n.owner === mailbox);
 
   // Remember which notes were unread when the page opened, then mark them read.
   const [freshIds] = useState(() => new Set(staffNotes.filter(n => !n.read).map(n => n.id)));
   useEffect(() => {
-    act.markNotesRead(STAFF_MAILBOX);
-  }, [act]);
+    act.markNotesRead(mailbox);
+  }, [act, mailbox]);
 
-  const openItems = state.items.filter(i => OPEN_STATUSES.includes(i.status));
-  const waiting = state.lost.filter(l => l.status === 'open');
-  const notified = state.lost.filter(l => l.status !== 'open');
+  const openItems = state.items.filter(i => i.building === session.building && OPEN_STATUSES.includes(i.status));
+  const visible = state.lost.filter(l => adminCanSee(l, session.building));
+  const waiting = visible.filter(l => l.status === 'open');
+  const notified = visible.filter(l => l.status !== 'open');
 
   function notifyStudent(reportId, itemIds, message) {
     const result = act.notifyMatch(reportId, itemIds, message);
@@ -33,6 +38,10 @@ export default function StudentRequests() {
     <>
       <h2>Student requests</h2>
       <span className="brush" />
+      <p className="sub">
+        Requests for the {buildingLabel(session.building)} and requests where the student isn&apos;t sure
+        of the building. You can match them with your building&apos;s found items.
+      </p>
 
       {staffNotes.slice(0, 5).map(n => (
         <div key={n.id} className="note">

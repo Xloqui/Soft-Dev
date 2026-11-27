@@ -6,7 +6,7 @@
 //   Same category ............................ +2  (required to be suggested)
 //   Same color ............................... +3  (similar color, e.g. "blue" / "dark blue": +2)
 //   Shared words in name/description ......... +1 each, up to +3
-//   Similar place (shared location words) .... +2
+//   Similar place ............................ +2  (the found item's place is mentioned in the report's description)
 //   Found 0–3 days after it was lost ......... +3
 //   Found 4–7 days after ..................... +2
 //   Found more than 7 days after ............. +1
@@ -93,7 +93,8 @@ export function scoreMatch(lost, item) {
     reasons.push(`${sharedWords} matching word${sharedWords > 1 ? 's' : ''}`);
   }
 
-  if (sharedCount(placeWords(lost.loc), placeWords(item.loc))) {
+  // Students describe the exact spot in their description (older reports had a separate `loc` field).
+  if (sharedCount(placeWords(`${lost.desc} ${lost.loc || ''}`), placeWords(item.loc))) {
     score += 2;
     reasons.push('similar place');
   }
