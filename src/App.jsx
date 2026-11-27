@@ -13,6 +13,7 @@ import Login from './pages/auth/Login.jsx';
 import Register from './pages/auth/Register.jsx';
 import NotFound from './pages/NotFound.jsx';
 import MyReports from './pages/student/MyReports.jsx';
+import Profile from './pages/student/Profile.jsx';
 import ReportLostItem from './pages/student/ReportLostItem.jsx';
 
 
@@ -37,6 +38,7 @@ export default function App() {
             <Route index element={<Navigate to="report" replace />} />
             <Route path="report" element={<ReportLostItem />} />
             <Route path="reports" element={<MyReports />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
 
           <Route
